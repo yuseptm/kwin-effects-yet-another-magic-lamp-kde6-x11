@@ -1,2 +1,8 @@
 /.vscode
 /build
+/build-*
+/.makepkg
+/pkg
+/src/project
+/src/project-build
+/*.pkg.tar.zst

@@ -66,7 +66,7 @@ static Direction realizeDirection(const KWin::EffectWindow* window, const QRectF
     }
 
     // No panel found — fall back to closest screen edge (KDE uses ScreenArea intersect here).
-    KWin::LogicalOutput* screen = KWin::effects->screenAt(iconRect.center().toPoint());
+    KWinCompat::Output* screen = KWin::effects->screenAt(iconRect.center().toPoint());
     const QRectF screenRect = KWinCompat::fullScreenArea(KWin::effects, screen);
     const QPointF c = iconRect.center();
     const qreal l = qAbs(c.x() - screenRect.left());
@@ -514,8 +514,9 @@ void Model::applyTravel(KWin::WindowQuadList& quads) const
     if (g < m_split) {
         const qreal local = m_split > 0.0 ? g / m_split : 1.0;
         params.stretchProgress = m_shapeFactor * local;
-        // unminimize: the bump comes back together with the stretch
-        params.bumpProgress = m_coupledBump ? params.stretchProgress : 1.0;
+        // On restore, normalize bump progress to this whole phase so it reaches
+        // 1 exactly at the split and joins smoothly with the squash phase.
+        params.bumpProgress = m_coupledBump ? local : 1.0;
     } else {
         const qreal local = m_split < 1.0 ? (g - m_split) / (1.0 - m_split) : 1.0;
         params.squashProgress = local;

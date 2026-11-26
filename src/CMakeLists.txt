@@ -29,7 +29,7 @@ target_link_libraries(kwin4_effect_yetanothermagiclamp
     KF6::ConfigGui
     KF6::CoreAddons
     KF6::WindowSystem
-    KWin::kwin
+    ${KWIN_EFFECTS_TARGET}
 )
 
 install(
@@ -37,5 +37,5 @@ install(
         kwin4_effect_yetanothermagiclamp
 
     DESTINATION
-        ${KDE_INSTALL_QTPLUGINDIR}/kwin/effects/plugins/
+        ${KDE_INSTALL_PLUGINDIR}/kwin-x11/effects/plugins
 )

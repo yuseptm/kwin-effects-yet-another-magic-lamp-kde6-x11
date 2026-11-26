@@ -36,7 +36,7 @@
 // Returns which screen edge a dock panel is closest to.
 static Direction dockEdge(KWin::EffectWindow* dock)
 {
-    KWin::LogicalOutput* screen = KWin::effects->screenAt(
+    KWinCompat::Output* screen = KWin::effects->screenAt(
         dock->frameGeometry().center().toPoint());
     const QRectF screenRect = KWinCompat::fullScreenArea(KWin::effects, screen);
     const QPointF c = dock->frameGeometry().center();
@@ -61,9 +61,8 @@ static Direction dockEdge(KWin::EffectWindow* dock)
 // with multiple task managers writing _NET_WM_ICON_GEOMETRY), the icon is
 // remapped to the correct screen.
 //
-// Screen identity is determined via dock window pointers (always in global
-// coordinates) rather than screenAt(iconRect.center()), which is unreliable
-// when iconGeometry() uses screen-local coordinates (as on Wayland).
+// Screen identity is determined via dock window pointers and global X11
+// coordinates rather than relying on iconGeometry() alone.
 // When the target screen has multiple panels, the panel on the same screen
 // edge as the source panel is preferred (picks task bar over status bar).
 // Position is translated by the screen-origin offset so that an icon at local
@@ -75,7 +74,7 @@ static QRectF resolveIconGeometry(KWin::EffectWindow* w)
 
     // Window center determines the authoritative screen (robust against decorations
     // extending a few pixels into an adjacent screen).
-    KWin::LogicalOutput* primaryScreen = KWin::effects->screenAt(
+    KWinCompat::Output* primaryScreen = KWin::effects->screenAt(
         w->frameGeometry().center().toPoint());
     if (!primaryScreen) {
         return iconRect;
@@ -100,7 +99,7 @@ static QRectF resolveIconGeometry(KWin::EffectWindow* w)
     // If the dock containing the icon is already on the primary screen, the
     // iconGeometry is correct — use it directly.
     if (sourceDock) {
-        KWin::LogicalOutput* sourceDockScreen = KWin::effects->screenAt(
+        KWinCompat::Output* sourceDockScreen = KWin::effects->screenAt(
             sourceDock->frameGeometry().center().toPoint());
         if (sourceDockScreen == primaryScreen) {
             return iconRect;
@@ -123,7 +122,7 @@ static QRectF resolveIconGeometry(KWin::EffectWindow* w)
     //   → preferredEdge = opposite(Top) = Bottom  → picks the BOTTOM panel of lower screen ✓
     Direction preferredEdge = Direction::Bottom;
     if (sourceDock) {
-        KWin::LogicalOutput* srcScreen = KWin::effects->screenAt(
+        KWinCompat::Output* srcScreen = KWin::effects->screenAt(
             sourceDock->frameGeometry().center().toPoint());
         const QRectF srcRect = KWinCompat::fullScreenArea(KWin::effects, srcScreen);
         const QRectF tgtRect = KWinCompat::fullScreenArea(KWin::effects, primaryScreen);
@@ -202,7 +201,7 @@ static QRectF resolveIconGeometry(KWin::EffectWindow* w)
             iconRect.width(), iconRect.height());
     }
 
-    KWin::LogicalOutput* sourceDockScreen = KWin::effects->screenAt(
+    KWinCompat::Output* sourceDockScreen = KWin::effects->screenAt(
         sourceDock->frameGeometry().center().toPoint());
     const QRectF srcScreenRect = KWinCompat::fullScreenArea(KWin::effects, sourceDockScreen);
     const QRectF tgtScreenRect = KWinCompat::fullScreenArea(KWin::effects, primaryScreen);
@@ -376,12 +375,12 @@ void YetAnotherMagicLampEffect::prePaintScreen(KWin::ScreenPrePaintData& data, s
     KWinCompat::prePaintScreen(KWin::effects, data, presentTime);
 }
 
-void YetAnotherMagicLampEffect::prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data, std::chrono::milliseconds presentTime)
+void YetAnotherMagicLampEffect::prePaintWindow(KWin::EffectWindow* w, KWin::WindowPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     if (m_animations.contains(w)) {
         data.mask |= PAINT_WINDOW_TRANSFORMED;
     }
-    KWinCompat::prePaintWindow(KWin::effects, view, w, data, presentTime);
+    KWin::effects->prePaintWindow(w, data, presentTime);
 }
 #else
 void YetAnotherMagicLampEffect::prePaintScreen(KWin::ScreenPrePaintData& data)
@@ -396,12 +395,12 @@ void YetAnotherMagicLampEffect::prePaintScreen(KWin::ScreenPrePaintData& data)
     KWinCompat::prePaintScreen(KWin::effects, data, presentTime);
 }
 
-void YetAnotherMagicLampEffect::prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data)
+void YetAnotherMagicLampEffect::prePaintWindow(KWin::EffectWindow* w, KWin::WindowPrePaintData& data)
 {
     if (m_animations.contains(w)) {
         data.mask |= PAINT_WINDOW_TRANSFORMED;
     }
-    KWinCompat::prePaintWindow(KWin::effects, view, w, data, KWinCompat::monotonicTimestamp());
+    KWin::effects->prePaintWindow(w, data);
 }
 #endif
 
@@ -423,24 +422,27 @@ void YetAnotherMagicLampEffect::postPaintScreen()
 YetAnotherMagicLampEffect::PaintWindowResult YetAnotherMagicLampEffect::paintWindow(const KWin::RenderTarget& renderTarget,
     const KWin::RenderViewport& viewport,
     KWin::EffectWindow* w, int mask,
-    const KWin::Region& region,
+    QRegion region,
     KWin::WindowPaintData& data)
 {
-    const KWin::Region* paintRegion = &region;
-    KWin::Region clip;
+    QRegion paintRegion = region;
+    Q_UNUSED(viewport)
     auto it = m_animations.constFind(w);
     if (it != m_animations.constEnd()) {
         if (it->model.needsClip()) {
-            const KWin::Region clipLogical(it->model.clipRegion());
-            clip = viewport.mapToDeviceCoordinatesAligned(clipLogical);
-            paintRegion = &clip;
+            paintRegion = it->model.clipRegion();
         }
         const qreal opacity = it->model.opacity();
         if (opacity < 1.0) {
             data.multiplyOpacity(opacity); // "fade" option
         }
     }
-    return KWin::effects->paintWindow(renderTarget, viewport, w, mask, *paintRegion, data);
+#ifdef KWIN_PAINTWINDOW_RETURNS_BOOL
+    return KWin::effects->paintWindow(renderTarget, viewport, w, mask, paintRegion, data);
+#else
+    KWin::effects->paintWindow(renderTarget, viewport, w, mask, paintRegion, data);
+    return;
+#endif
 }
 
 void YetAnotherMagicLampEffect::apply(KWin::EffectWindow* window, int mask, KWin::WindowPaintData& data, KWin::WindowQuadList& quads)
@@ -496,9 +498,8 @@ void YetAnotherMagicLampEffect::startMinimize(KWin::EffectWindow* w)
 
     const QRectF iconRect = w->iconGeometry();
     if (!iconRect.isValid()) {
-        // On Wayland secondary screens the Plasma taskbar sets iconGeometry
-        // asynchronously (after QML layout). Keep the window visible and retry
-        // once the geometry arrives.
+        // Some taskbars publish iconGeometry asynchronously after layout. Keep
+        // the window visible and retry once the geometry arrives.
         if (m_pendingMinimize.contains(w)) {
             return;
         }

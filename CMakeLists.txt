@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(kwin-effects-yaml)
+project(kwin-effects-yet-another-magic-lamp-x11)
 
 set(KF_MIN_VERSION "6.0")
 
@@ -33,9 +33,9 @@ find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
     WindowSystem
 )
 
-find_package(KWin REQUIRED)
-
-find_package(KWinDBusInterface CONFIG REQUIRED)
+find_package(KWinX11 REQUIRED)
+find_package(KWinX11DBusInterface CONFIG REQUIRED)
+set(KWIN_EFFECTS_TARGET KWinX11::kwin)
 
 file(WRITE "${CMAKE_BINARY_DIR}/kwin_prepaint_probe.cc"
 "#include <effect/effect.h>
@@ -47,7 +47,7 @@ int main() { return 0; }
 ")
 try_compile(KWIN_PREPAINT_HAS_PRESENT_TIME
     SOURCES "${CMAKE_BINARY_DIR}/kwin_prepaint_probe.cc"
-    LINK_LIBRARIES KWin::kwin Qt6::Core Qt6::Gui KF6::CoreAddons
+    LINK_LIBRARIES ${KWIN_EFFECTS_TARGET} Qt6::Core Qt6::Gui KF6::CoreAddons
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON)
 
@@ -56,13 +56,13 @@ file(WRITE "${CMAKE_BINARY_DIR}/kwin_paintwindow_probe.cc"
 "#include <effect/effect.h>
 struct Probe : KWin::Effect {
     bool paintWindow(const KWin::RenderTarget&, const KWin::RenderViewport&, KWin::EffectWindow*,
-        int, const KWin::Region&, KWin::WindowPaintData&) override { return true; }
+        int, QRegion, KWin::WindowPaintData&) override { return true; }
 };
 int main() { return 0; }
 ")
 try_compile(KWIN_PAINTWINDOW_RETURNS_BOOL
     SOURCES "${CMAKE_BINARY_DIR}/kwin_paintwindow_probe.cc"
-    LINK_LIBRARIES KWin::kwin Qt6::Core Qt6::Gui KF6::CoreAddons
+    LINK_LIBRARIES ${KWIN_EFFECTS_TARGET} Qt6::Core Qt6::Gui KF6::CoreAddons
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON)
 message(STATUS "KWin paintWindow returns bool: ${KWIN_PAINTWINDOW_RETURNS_BOOL}")

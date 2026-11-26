@@ -28,5 +28,5 @@ install(
         kwin_yetanothermagiclamp_config
 
     DESTINATION
-        ${KDE_INSTALL_QTPLUGINDIR}/kwin/effects/configs/
+        ${KDE_INSTALL_PLUGINDIR}/kwin-x11/effects/configs
 )

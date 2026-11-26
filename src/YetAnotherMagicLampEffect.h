@@ -47,10 +47,10 @@ public:
     // signature that matches the installed KWin so `override` stays correct.
 #ifdef KWIN_PREPAINT_HAS_PRESENT_TIME
     void prePaintScreen(KWin::ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
-    void prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(KWin::EffectWindow* w, KWin::WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
 #else
     void prePaintScreen(KWin::ScreenPrePaintData& data) override;
-    void prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data) override;
+    void prePaintWindow(KWin::EffectWindow* w, KWin::WindowPrePaintData& data) override;
 #endif
     void postPaintScreen() override;
 
@@ -62,7 +62,7 @@ public:
     using PaintWindowResult = void;
 #endif
     PaintWindowResult paintWindow(const KWin::RenderTarget& renderTarget, const KWin::RenderViewport& viewport,
-        KWin::EffectWindow* w, int mask, const KWin::Region& region,
+        KWin::EffectWindow* w, int mask, QRegion region,
         KWin::WindowPaintData& data) override;
 
     bool isActive() const override;

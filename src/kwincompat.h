@@ -16,10 +16,12 @@
 
 namespace KWinCompat {
 
+using Output = KWin::Output;
+
 template <typename EffectsHandler>
-QRectF fullScreenArea(EffectsHandler* handler, KWin::LogicalOutput* screen)
+QRectF fullScreenArea(EffectsHandler* handler, Output* screen)
 {
-    if constexpr (requires(EffectsHandler* h, KWin::LogicalOutput* s, KWin::VirtualDesktop* desktop) {
+    if constexpr (requires(EffectsHandler* h, Output* s, KWin::VirtualDesktop* desktop) {
                       h->clientArea(KWin::FullScreenArea, s, desktop);
                   }) {
         return handler->clientArea(KWin::FullScreenArea, screen, handler->currentDesktop());
@@ -53,17 +55,6 @@ void prePaintScreen(EffectsHandler* handler, KWin::ScreenPrePaintData& data, std
         handler->prePaintScreen(data, presentTime);
     } else {
         handler->prePaintScreen(data);
-    }
-}
-
-template <typename EffectsHandler>
-void prePaintWindow(EffectsHandler* handler, KWin::RenderView* view, KWin::EffectWindow* window,
-    KWin::WindowPrePaintData& data, std::chrono::milliseconds presentTime)
-{
-    if constexpr (requires(EffectsHandler* h) { h->prePaintWindow(view, window, data, presentTime); }) {
-        handler->prePaintWindow(view, window, data, presentTime);
-    } else {
-        handler->prePaintWindow(view, window, data);
     }
 }
 

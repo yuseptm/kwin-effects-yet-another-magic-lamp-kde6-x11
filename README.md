@@ -1,188 +1,49 @@
-# Yet Another Magic Lamp (Plasma 6.6+)
+# Yet Another Magic Lamp for KWin X11
 
-<div align="center">
-  <a href="https://youtu.be/i8tt4JLWGy8">
-    <img src="https://github.com/user-attachments/assets/616a9a82-1fd1-4477-a436-9be6003c80f2" alt="Demo" />
-  </a>
-</div>
+Yet Another Magic Lamp is a configurable window minimize animation for KWin. This repository is the **X11-only** Plasma 6 build, derived from the original [Yet Another Magic Lamp](https://github.com/zzag/kwin-effects-yet-another-magic-lamp).
 
-[Demo](https://youtu.be/i8tt4JLWGy8)
+For the Wayland build, use [kwin-effects-yet-another-magic-lamp-reloaded](https://github.com/koryboc/kwin-effects-yet-another-magic-lamp-reloaded).
 
-Yet Another Magic Lamp is a window minimization effect for KWin. Whenever a window is minimized, it'll get sucked down into the dock/panel. Compared to the Magic Lamp effect shipped with KWin, this effect features a smoother, more „curvy“ animation and more configuration options. Additionally, this fork improves upon both the built-in effect and the original by [Vlad Zahorodnii](https://github.com/zzag/kwin-effects-yet-another-magic-lamp) with fixed multi-monitor support — correctly identifying the target panel when minimizing, regardless of which screen the window is on or how panels are distributed across displays.
+This build uses KWin's X11 effect API and installs its plugin under `kwin-x11/effects/plugins`. It requires KWin X11 development files. KDE's standalone Plasma X11 session ended with Plasma 6.7; KWin X11 forks may continue to provide the required API on later releases.
 
-This project was originally created by [Vlad Zahorodnii](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), who maintained it through Plasma 5.27. Since the original repository has not been updated in several years, this fork continues development independently, focusing exclusively on Wayland under Plasma 6. X11 is no longer supported.
+## Tested environment
 
-Plasma 6.8 is the tested target. Plasma 6.6 and 6.7 should still work from the same source, but are no longer tested.
+This X11 fork has been tested on CachyOS Linux (rolling) with Sonic DE 6.8.2.
 
-### Features
+## Build on Arch Linux
 
-- **Presets** — ten ready-made looks (Classic, Genie, Soft, Fast, Springy, Jelly, Ghost, Silk, Whirlwind, Smoke) or your own custom combination
-- **Animation options** — shape curve, motion profile, spring on restore, fade, neck wave, neck curve, and separate durations for bump, stretch and squash
-- **Settings page** — every option comes with a description; English, German, Russian and Ukrainian, switchable on the page
-- **Multi-monitor aware** — finds the right panel across screens; with no visible panel (e.g. auto-hidden), windows minimize to the bottom center of the screen
+Install the build dependencies and create the package from this checkout:
 
-### Installation
-
-#### Quick install
-
-Clone the repository and run the install script — it will check and install all required dependencies automatically, then build and install the effect.
-
-```yaml
-git clone https://github.com/koryboc/kwin-effects-yet-another-magic-lamp-reloaded.git
-cd kwin-effects-yet-another-magic-lamp-reloaded
-chmod +x ./install.sh
-./install.sh
+```sh
+sudo pacman -S --needed base-devel cmake extra-cmake-modules kwin-x11 \
+    kconfig kconfigwidgets kcoreaddons kcmutils kwindowsystem qt6-base qt6-tools
+./make-arch-package.sh
 ```
 
-Supports Arch Linux, Debian, Fedora, openSUSE Tumbleweed and NixOS (user-level install into `~/.local`), as well as most distributions based on these.
+The package is defined in [PKGBUILD](PKGBUILD). The helper builds it in a separate directory so makepkg's cleanup cannot overlap the repository's `src/` directory. Install the resulting package with:
 
-Alternatively, download `auto_install_yet-another-magic-lamp.sh` from the [latest release](https://github.com/koryboc/kwin-effects-yet-another-magic-lamp-reloaded/releases/latest) and run it — it clones the repository and runs `install.sh` for you.
-
-> **Note:** The install script always tracks the dependencies of the latest supported Plasma version. On older Plasma versions it may install packages that are not strictly needed, and future changes could break the build there.
-
-| Plasma | Dependency differences |
-|--------|------------------------|
-| 6.6    | Vulkan headers are installed but not needed |
-| 6.7    | None — Vulkan headers are required from this version on |
-| 6.8    | None |
-
-#### Build from source
-
-You will need the following dependencies to build this effect:
-* CMake
-* any C++20 enabled compiler
-* Qt 6: Core, DBus, Gui, Widgets
-* KWin (Plasma 6.6 or later)
-* KDE Frameworks 6:
-    - Config
-    - ConfigWidgets
-    - CoreAddons
-    - Extra CMake Modules
-    - KCMUtils
-    - WindowSystem
-* libdrm
-* Vulkan headers
-
-On Arch Linux → Manjaro, EndeavourOS, Garuda Linux, CachyOS
-
-```yaml
-sudo pacman -S \
-    base-devel \
-    cmake \
-    extra-cmake-modules \
-    kwin \
-    kconfig \
-    kconfigwidgets \
-    kcmutils \
-    kcoreaddons \
-    kwindowsystem \
-    qt6-base \
-    libdrm \
-    vulkan-headers
+```sh
+sudo pacman -U kwin-effects-yet-another-magic-lamp-x11-6.8.2-3-$(uname -m).pkg.tar.zst
 ```
 
-On Fedora → Kinoite, Bazzite, Nobara
+## Build from source
 
-```yaml
-sudo dnf install \
-    cmake \
-    extra-cmake-modules \
-    kwin-devel \
-    kf6-kconfig-devel \
-    kf6-kconfigwidgets-devel \
-    kf6-kcmutils-devel \
-    kf6-kcoreaddons-devel \
-    kf6-kwindowsystem-devel \
-    qt6-qtbase-devel \
-    libdrm-devel \
-    libepoxy-devel \
-    vulkan-headers
-```
+Install CMake, a C++20 compiler, ECM, Qt 6 (Core, DBus, Gui, Widgets), the KDE Frameworks 6 modules listed above, and the development package for your KWin X11 implementation. Then run:
 
-On openSUSE Tumbleweed
-
-```yaml
-sudo zypper install \
-    gcc-c++ \
-    cmake \
-    kf6-extra-cmake-modules \
-    kwin6-devel \
-    kf6-kconfig-devel \
-    kf6-kconfigwidgets-devel \
-    kf6-kcmutils-devel \
-    kf6-kcoreaddons-devel \
-    kf6-kwindowsystem-devel \
-    qt6-base-devel \
-    qt6-declarative-devel \
-    libdrm-devel \
-    libepoxy-devel \
-    vulkan-headers
-```
-
-On Debian → Kubuntu, KDE neon, MX Linux, Nitrux
-
-> **Note:** This effect requires KWin 6.6 or later. Building on Debian-based distributions may
-> fail if the KWin version available in the repositories does not meet this requirement.
-
-```yaml
-sudo apt install \
-    build-essential \
-    cmake \
-    extra-cmake-modules \
-    kwin-dev \
-    libkf6config-dev \
-    libkf6configwidgets-dev \
-    libkf6coreaddons-dev \
-    libkf6kcmutils-dev \
-    libkf6windowsystem-dev \
-    qt6-base-dev \
-    libdrm-dev \
-    libvulkan-dev
-```
-
-After you installed all the required dependencies, you can build
-the effect:
-
-```yaml
-git clone https://github.com/koryboc/kwin-effects-yet-another-magic-lamp-reloaded.git
-cd kwin-effects-yet-another-magic-lamp-reloaded
-mkdir build && cd build
-cmake .. \
+```sh
+cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr
-make
-sudo make install
+cmake --build build --parallel
+sudo cmake --install build
 ```
 
+KWin X11 is required at both build and runtime. The plugin cannot be loaded by KWin Wayland.
 
-#### Building the effect against older Plasma versions
+## Configure the effect
 
-This fork targets **Plasma 6.6 and later** exclusively. For older Plasma (5.x) releases, use the original repository by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), which provides dedicated branches per Plasma version.
+Open **System Settings → Animations → Window minimize**, select **Yet Another Magic Lamp**, and apply. Use the configure button to choose a preset or adjust the animation.
 
-**Step 1** — Clone the original repository:
+## License
 
-```yaml
-git clone https://github.com/zzag/kwin-effects-yet-another-magic-lamp.git
-cd kwin-effects-yet-another-magic-lamp
-```
-
-**Step 2** — Check out the branch matching your Plasma version:
-
-```yaml
-git checkout Plasma/5.27
-```
-
-Replace `5.27` with your target version (e.g. `5.24`, `5.23`).
-
-
-### Using the effect
-
-Open **System Settings** and navigate to:
-
-**Animations** → **Window minimize**
-
-Select **"Yet Another Magic Lamp"** and click **Apply**. Click the configure button next to it to pick a preset or fine-tune the animation; changes apply immediately.
-
-### Contributing
-
-Contributions are welcome. For suggestions or ideas, please open an issue. For code contributions, run `clang-format` before submitting a pull request. Translations into further languages are welcome as well — see `src/kcm/Presets.h`.
+GPL-2.0-or-later. See [LICENSE](LICENSE).
