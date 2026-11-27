@@ -26,6 +26,8 @@ The package is defined in [PKGBUILD](PKGBUILD). The helper builds it in a separa
 sudo pacman -U kwin-effects-yet-another-magic-lamp-x11-6.8.2-3-$(uname -m).pkg.tar.zst
 ```
 
+A prebuilt x86_64 package is available at [dist/kwin-effects-yet-another-magic-lamp-x11-6.8.2-3-x86_64.pkg.tar.zst](dist/kwin-effects-yet-another-magic-lamp-x11-6.8.2-3-x86_64.pkg.tar.zst).
+
 ## Build from source
 
 Install CMake, a C++20 compiler, ECM, Qt 6 (Core, DBus, Gui, Widgets), the KDE Frameworks 6 modules listed above, and the development package for your KWin X11 implementation. Then run:
